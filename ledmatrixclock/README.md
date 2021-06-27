@@ -1,0 +1,23 @@
+# LED Matrix clock
+
+![Picture of the Project][capture-img]
+
+## BOM
+
+* Arduino Uno
+* [8x32 LED Matrix module with MAX7219 board][amz-led]
+
+## Pin Connections
+
+|Arduino Pin| LED Board Pin|
+|-----------|--------------|
+| +5V       |    VCC       |
+| GND       |    GND       |
+| Pin 10    |    CLK       |
+| Pin  9    |    CS        |
+| Pin  8    |    DIN       |
+
+
+----
+[capture-img]: images/20210627_135538.jpg "Capture"
+[amz-led]: https://www.amazon.com/MAX7219-Control-Display-Max7219-Controller/dp/B07GWV2GD7
