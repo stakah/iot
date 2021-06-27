@@ -2,6 +2,22 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"name": "ledmatrixclock",
+			"path": "arduino\\ledmatrixclock"
+		},
+		{
+			"name": "myasyncwebserver",
+			"path": "..\\..\\..\\Documents\\PlatformIO\\Projects\\myasyncwebserver"
+		},
+		{
+			"name": "es32simplewifi",
+			"path": "..\\..\\..\\Documents\\PlatformIO\\Projects\\es32simplewifi"
+		},
+		{
+			"name": "esp32blink",
+			"path": "..\\..\\..\\Documents\\PlatformIO\\Projects\\esp32blink"
 		}
 	]
 }
