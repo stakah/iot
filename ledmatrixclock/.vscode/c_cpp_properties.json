@@ -1,0 +1,60 @@
+//
+// !!! WARNING !!! AUTO-GENERATED FILE!
+// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
+// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
+//
+{
+    "configurations": [
+        {
+            "name": "PlatformIO",
+            "includePath": [
+                "/home/sergio/dev/github/iot/ledmatrixclock/include",
+                "/home/sergio/dev/github/iot/ledmatrixclock/src",
+                "/home/sergio/dev/github/iot/ledmatrixclock/.pio/libdeps/uno/LedControl@1.0.6/src",
+                "/home/sergio/.platformio/packages/framework-arduino-avr/cores/arduino",
+                "/home/sergio/.platformio/packages/framework-arduino-avr/variants/standard",
+                "/home/sergio/dev/github/iot/ledmatrixclock/.pio/libdeps/uno/LedControl/src",
+                "/home/sergio/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
+                "/home/sergio/.platformio/packages/framework-arduino-avr/libraries/HID/src",
+                "/home/sergio/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
+                "/home/sergio/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
+                "/home/sergio/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "/home/sergio/dev/github/iot/ledmatrixclock/include",
+                    "/home/sergio/dev/github/iot/ledmatrixclock/src",
+                    "/home/sergio/dev/github/iot/ledmatrixclock/.pio/libdeps/uno/LedControl@1.0.6/src",
+                    "/home/sergio/.platformio/packages/framework-arduino-avr/cores/arduino",
+                    "/home/sergio/.platformio/packages/framework-arduino-avr/variants/standard",
+                    "/home/sergio/dev/github/iot/ledmatrixclock/.pio/libdeps/uno/LedControl/src",
+                    "/home/sergio/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
+                    "/home/sergio/.platformio/packages/framework-arduino-avr/libraries/HID/src",
+                    "/home/sergio/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
+                    "/home/sergio/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
+                    "/home/sergio/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=50101",
+                "ARDUINO_AVR_UNO",
+                "F_CPU=16000000L",
+                "ARDUINO_ARCH_AVR",
+                "ARDUINO=10808",
+                "__AVR_ATmega328P__",
+                ""
+            ],
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "compilerPath": "/home/sergio/.platformio/packages/toolchain-atmelavr/bin/avr-gcc",
+            "compilerArgs": [
+                "-mmcu=atmega328p",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}
