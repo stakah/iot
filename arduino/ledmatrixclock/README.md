@@ -20,11 +20,13 @@
 ## Releases
 
 ### v0.1
+
   First iteration with simple delay in loop function to measure time.
 
   Simple test shown about 3 hours delay per 24 hours cycle. 
 
 ### v0.2
+
   Second iteration. Instead of using delay in loop function, use Hardware timer interrupt to count time
   and increase conters. Espected to be more precise than v0.1.
 ----
