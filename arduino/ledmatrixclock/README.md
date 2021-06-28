@@ -29,6 +29,7 @@
 
   Second iteration. Instead of using delay in loop function, use Hardware timer interrupt to count time
   and increase conters. Espected to be more precise than v0.1.
+  
 ----
 [capture-img]: images/20210627_135538.jpg "Capture"
 [amz-led]: https://www.amazon.com/MAX7219-Control-Display-Max7219-Controller/dp/B07GWV2GD7
