@@ -10,8 +10,7 @@ int DIN = 8;
 int CS = 9;
 int CLK = 10;
 LedControl lc= LedControl(DIN, CLK, CS,4);
-int leftPin = A0;
-int h,m,s,hs = 0;
+int h,m,s,ms,hs = 0;
 
 byte digits[10][8]={
   {B01111000, //0
@@ -96,13 +95,43 @@ byte digits[10][8]={
    B00000000}
 };
 
+void refreshDisplay();
+void drawNumber(int, int, int, int);
+void tikClock();
+
 void setup() {
   Serial.begin(9600);
   for (int d=0; d<4; d++) {
     lc.shutdown(d,false);
     lc.setIntensity(d,0);
     lc.clearDisplay(d);
+    h = 8;
+    m = 9;
   }
+
+  refreshDisplay();
+
+  TCCR0A=(1<<WGM01);    //Set the CTC mode   
+
+  // OCR0A = (cLK)/PSC) * T - 1
+  // CLK: Clock speed (16 MHz) = 16 10^6 Hz
+  // PSC = [1 | 8 | 64 | 256]
+  // T: Desired time period in seconds
+
+  // OCR0A = (16e6/64) * 1e-3 - 1 =>
+  // OCR0A = 249
+  OCR0A=0xF9; //Value for ORC0A for 1ms 
+  
+  TIMSK0|=(1<<OCIE0A);   //Set the interrupt request
+  sei(); //Enable interrupt
+  
+  TCCR0B|=(1<<CS01);    //Set the prescale 1/64 clock
+  TCCR0B|=(1<<CS00);
+
+}
+
+ISR(TIMER0_COMPA_vect){    //This is the interrupt request
+  tikClock();
 }
 
 void drawNumber(int num, int col, int dots, int offset) {
@@ -121,28 +150,34 @@ void drawNumber(int num, int col, int dots, int offset) {
   }
 }
 
+void refreshDisplay() {
+  drawNumber(h, 3, hs, 0);
+  drawNumber(m, 1, 0, 1);
 
-void simpleClock() {
-  delay(500);
+}
 
-  hs = (hs +1) % 2;
+void tikClock() {
 
-  if (hs == 0) {
-    s = (s + 1) % 60;
+  ms = (ms + 1) % 500;
 
-    if (s == 0) {
-      m = (m + 1) % 60;
+  if (ms == 0) {
+    hs = (hs + 1) % 2;
 
-      if (m == 0) {
-        h = (h + 1) % 24;
+    if (hs == 0) {
+      s = (s + 1) % 60;
+
+      if (s == 0) {
+        m = (m + 1) % 60;
+
+        if (m == 0) {
+          h = (h + 1) % 24;
+        }
       }
     }
   }
-
-  drawNumber(h, 3, hs, 0);
-  drawNumber(m, 1, 0, 1);
 }
 
 void loop() {
-  simpleClock();
+  delay(200);
+  refreshDisplay();
 }
