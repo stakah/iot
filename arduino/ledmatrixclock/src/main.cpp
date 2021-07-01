@@ -19,7 +19,7 @@ int h,m,s,ms,hs = 0;
 
 const int debug = 0; // 1-debug messages, 0-no debug messages
 int btnPin[4] = {2, 3, 4, 5};
-int btnState[4] = {LOW, LOW, LOW, LOW};
+int btnState[4] = {HIGH, HIGH, HIGH, HIGH};
 int currentRead[4] = {0, 0, 0, 0};
 int mode[4] = {DISPLAY_TIME, 0, 0, 0};
 int btnModes[4] = {3, 2, 2, 2};
@@ -124,7 +124,7 @@ void setup() {
     lc.clearDisplay(d);
   }
   
-  for (int i=0; i<4; i++) pinMode(btnPin[i], INPUT);
+  for (int i=0; i<4; i++) pinMode(btnPin[i], INPUT_PULLUP);
 
   refreshDisplay();
 
@@ -287,17 +287,17 @@ void stateHandler() {
   switch (mode[0]) {
     case SET_HOUR:
         s = 0;
-      if (btnState[3] == HIGH) {
+      if (btnState[3] == LOW) {
         h = (h + 23) % 24;
-      } else if (btnState[2] == HIGH) {
+      } else if (btnState[2] == LOW) {
         h = (h + 1) % 24;
       }
       break;
     case SET_MINUTE:
         s = 0;
-      if (btnState[3] == HIGH) {
+      if (btnState[3] == LOW) {
         m = (m + 59) % 60;
-      } else if (btnState[2] == HIGH) {
+      } else if (btnState[2] == LOW) {
         m = (m + 1) % 60;
       }
       break;
@@ -328,15 +328,15 @@ void readBtn(int btn) {
   if ((millis()-debounce[btn]) > debounceDelay) {
   // Serial.print(millis()-debounce[btn]);
   // Serial.print(" "); Serial.println(debounceDelay);
-    if (currentRead[btn] == HIGH && btnState[btn] == LOW) {
-      btnState[btn] = HIGH;
+    if (currentRead[btn] == LOW && btnState[btn] == HIGH) {
+      btnState[btn] = LOW;
       // Serial.print("[A] mode:");Serial.println(mode[btn]);
         mode[btn] = (mode[btn] + 1) % btnModes[btn];
         Serial.print("[B] mode:");Serial.println(mode[btn]);
         stateHandler();
     } else
-    if (currentRead[btn] == LOW && btnState[btn] == HIGH) {
-      btnState[btn] = LOW;
+    if (currentRead[btn] == HIGH && btnState[btn] == LOW) {
+      btnState[btn] = HIGH;
     }
   }
 }
@@ -349,5 +349,5 @@ void loop() {
 
   
   refreshDisplay();
-  delay(20);
+  // delay(20);
 }
