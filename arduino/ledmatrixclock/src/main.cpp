@@ -30,85 +30,85 @@ unsigned long debounceDelay = 50;
 unsigned long refreshInterval = 100L;
 
 byte digits[10][8]={
-  {B01111000, //0
-   B11000100,
-   B10100100,
-   B10110100,
-   B10010100,
-   B10001100,
-   B01111000,
+  {B00001110, //0
+   B00011001,
+   B00010101,
+   B00010101,
+   B00010101,
+   B00010011,
+   B00001110,
    B00000000},
-  {B00010000, //1
-   B01110000,
-   B00010000,
-   B00010000,
-   B00010000,
-   B00010000,
-   B01111100,
+  {B00000010, //1
+   B00001110,
+   B00000010,
+   B00000010,
+   B00000010,
+   B00000010,
+   B00001111,
    B00000000},
-  {B01111000, //2
-   B10000100,
+  {B00001110, //2
+   B00010001,
+   B00000001,
+   B00001110,
+   B00010000,
+   B00010000,
+   B00011111,
+   B00000000},
+  {B00001110, //3
+   B00010001,
+   B00000001,
+   B00000110,
+   B00000001,
+   B00010001,
+   B00001110,
+   B00000000},
+  {B00000010, //4
+   B00000110,
+   B00001010,
+   B00010010,
+   B00011111,
+   B00000010,
+   B00000010,
+   B00000000},
+  {B00011111, //5
+   B00010000,
+   B00010110,
+   B00011001,
+   B00000001,
+   B00010001,
+   B00001110,
+   B00000000},
+  {B00001110, //6
+   B00010001,
+   B00010000,
+   B00011110,
+   B00010001,
+   B00010001,
+   B00001110,
+   B00000000},
+  {B00011111, //7
+   B00010001,
+   B00000010,
+   B00000010,
    B00000100,
-   B01111000,
-   B10000000,
-   B10000000,
-   B11111100,
-   B00000000},
-  {B01111000, //3
-   B10000100,
    B00000100,
-   B00111000,
    B00000100,
-   B10000100,
-   B01111000,
    B00000000},
-  {B00010000, //4
-   B00110000,
-   B01010000,
-   B10010000,
-   B11111100,
-   B00010000,
-   B00010000,
+  {B00001110, //8
+   B00010001,
+   B00010001,
+   B00011111,
+   B00010001,
+   B00010001,
+   B00001110,
    B00000000},
-  {B11111100, //5
-   B10000000,
-   B10111000,
-   B11000100,
-   B00000100,
-   B10000100,
-   B01111000,
-   B00000000},
-  {B01111000, //6
-   B10000100,
-   B10000000,
-   B11111000,
-   B10000100,
-   B10000100,
-   B01111000,
-   B00000000},
-  {B11111000, //7
-   B10001000,
-   B00010000,
-   B00010000,
-   B00100000,
-   B00100000,
-   B00100000,
-   B00000000},
-  {B01111000, //8
-   B10000100,
-   B10000100,
-   B11111100,
-   B10000100,
-   B10000100,
-   B01111000,
-   B00000000},
-  {B01111000, //9
-   B10000100,
-   B10000100,
-   B01111100,
-   B00000100,
-   B10000100,
-   B01111000,
+  {B00001110, //9
+   B00010001,
+   B00010001,
+   B00001111,
+   B00000001,
+   B00010001,
+   B00001110,
    B00000000}
 };
 
@@ -164,7 +164,7 @@ void setup() {
 
 
     h = 12;
-    m = 55;
+    m = 34;
 
     if (debug) {
     Serial.print("Clock started: ");
@@ -177,7 +177,13 @@ ISR(TIMER1_COMPA_vect){    //This is the interrupt request
   tikClock();
 }
 
-void drawNumber(int num, int col, int dots, int offset) {
+void drawNumber(int num, int x, int dots, int charWidth) {
+  int col = 3 - x / 8;
+  int dx = - (x % 8) + 1;
+  int w = 8 - charWidth;
+  int dxu = dx + w;
+  int dxd = dxu + charWidth;
+  int h,l = 0;
   int d = num / 10;
   int u = num % 10;
 
@@ -185,43 +191,46 @@ void drawNumber(int num, int col, int dots, int offset) {
   byte btnLLed = 1 << mode[col-1];
 
   for (int row=0; row<8; row++) {
-    int vd = digits[d][row] >> offset;
-    int vu = digits[u][row] >> offset;
+    int vd = digits[d][row] << w;
+    int vu = digits[u][row] << w;
+    int line = (vu << dxu) | (vd << dxd);
+    h = (line & 0xFF00) >> 8;
+    l = (line & 0x00FF);
     if (dots > 0 && (row == 2 || row == 4)) {
-      vu |= 1;
+      l |= 2;
     }
     if (row == 7) {
-      vd |= btnHLed;
-      vu |= btnLLed;
+      h |= btnHLed;
+      l |= btnLLed;
     }
 
-    lc.setRow(col, row, vd);
-    lc.setRow(col-1, row, vu);
+    lc.setRow(col, row, h);
+    lc.setRow(col-1, row, l);
 
   }
 }
 
 void displayTime() {
-    drawNumber(h, 3, hs, 0);
-    drawNumber(m, 1, 0, 1);
+    drawNumber(h, 2, hs, 6);
+    drawNumber(m, 16, 0, 6);
 }
 void displaySetHour() {
     if (hs == 0) {
       lc.clearDisplay(3);
       lc.clearDisplay(2);
     } else {
-      drawNumber(h, 3, hs, 0);
+      drawNumber(h, 2, hs, 6);
     }
-    drawNumber(m, 1, 0, 1);
+    drawNumber(m, 16, 0, 6);
  
 }
 void displaySetMinute() {
-    drawNumber(h, 3, hs, 0);
+    drawNumber(h, 2, hs, 6);
     if (hs == 0) {
       lc.clearDisplay(1);
       lc.clearDisplay(0);
     } else {
-      drawNumber(m, 1, 0, 1);
+      drawNumber(m, 16, 0, 6);
     }
 
 }
