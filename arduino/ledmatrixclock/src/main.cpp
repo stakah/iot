@@ -27,7 +27,7 @@ int btnModes[4] = {3, 2, 2, 2};
 
 unsigned long debounce[4] = {0, 0, 0, 0};
 unsigned long debounceDelay = 50;
-unsigned long refreshInterval = 100L;
+unsigned long refreshInterval = 200L;
 
 byte digits[10][8]={
   {B00001110, //0
@@ -153,12 +153,25 @@ void setup() {
   TCNT1  = 0;//initialize counter value to 0
   // set compare match register for 1hz increments
   // OCR1A = 15624;// = (16*10^6) / (1*1024) - 1 (must be <65536)
-  // set compare match register for 2hz increments
-  OCR1A = 15624/2;// = (16*10^6) / (2*1024) - 1 (must be <65536)
+  // set compare match register for 400hz increments (T = 1/400 = 2.5ms)
+  OCR1A = 39999;// = (16*10^6) / (400) - 1 (must be <65536)
   // turn on CTC mode
   TCCR1B |= (1 << WGM12);
-  // Set CS10 and CS12 bits for 1024 prescaler
-  TCCR1B |= (1 << CS12) | (1 << CS10);  
+  // Clock Select Bit Description
+  // +----+----+----+--------------------------------------------------------+
+  // |CS12|CS11|CS10| Description                                            |
+  // +----+----+----+--------------------------------------------------------+
+  // |  0 |  0 |  0 | No clock source (Timer/Counter stopped)                |
+  // |  0 |  0 |  1 | clk/1 (No prescaling)                                  |
+  // |  0 |  1 |  0 | clk/8 (From prescaler)                                 |
+  // |  0 |  1 |  1 | clk/64 (From prescaler)                                |
+  // |  1 |  0 |  0 | clk/256 (From prescaler)                               |
+  // |  1 |  0 |  1 | clk/1024 (From prescaler)                              |
+  // |  1 |  1 |  0 | External clock source on T1 pin. Clock on falling edge |
+  // |  1 |  1 |  1 | External clock source on T1 pin. Clock on rising edge  |
+  // +----+----+----+--------------------------------------------------------+
+  // Set CS10 for no prescaler
+  TCCR1B |= (1 << CS10);  
   // enable timer compare interrupt
   TIMSK1 |= (1 << OCIE1A);
 
@@ -288,8 +301,17 @@ void tikClock1ms() {
   }
 }
 
+void tikClock2_5ms() {
+  ms = (ms + 1) % 200;
+
+  if (ms == 0) {
+    tikClock2Hz();
+  }
+}
+
 void tikClock() {
-  tikClock2Hz();
+  // tikClock2Hz();
+  tikClock2_5ms();
 }
 
 void stateHandler() {
