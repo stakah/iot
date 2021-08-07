@@ -418,16 +418,16 @@ void stateHandler() {
       break;
     case SET_YEAR:
       if (btnState[3] == LOW) {
-        year = (year + 9999) % 10000;
+        year = (year + 2099) % 2100;
         adjust_rtc(year, month, day, h, m, s);
       } else if (btnState[2] == LOW) {
-        year = (year + 1) % 10000;
+        year = (year + 1) % 2100;
         adjust_rtc(year, month, day, h, m, s);
       }
       break;
     case SET_MONTH:
       if (btnState[3] == LOW) {
-        month = (month + 11) % 12;
+        month = ((month - 1) + 11) % 12 + 1;
         adjust_rtc(year, month, day, h, m, s);
       } else if (btnState[2] == LOW) {
         month = month % 12 + 1;
@@ -438,18 +438,26 @@ void stateHandler() {
       bool isLeapYear = testLeapYear(year);
       int modulo = 30;
 
-      if (month == 1 || month == 3 || month == 5 || month == 7 ||
-          month == 8 || month == 10 || month == 12) {
-            modulo = 31;
-      } else if (month == 2 && isLeapYear) {
-            modulo = 29;
-      } 
+      switch (month) {
+        case 1:
+        case 3:
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+        case 12: 
+          modulo = 31;
+          break;
+        case 2:
+          modulo = isLeapYear ? 29 : 28;
+          break;
+      }
 
       if (btnState[3] == LOW) {
-        day = (day + (modulo-1)) % modulo + 1;
+        day = (day - 1 + (modulo-1)) % modulo + 1; 
         adjust_rtc(year, month, day, h, m, s);
       } else if (btnState[2] == LOW) {
-        day = (day + 1) % modulo + 1;
+        day = day % modulo + 1;
         adjust_rtc(year, month, day, h, m, s);
       }
       break;
