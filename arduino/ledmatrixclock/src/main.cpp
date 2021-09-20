@@ -17,6 +17,11 @@
 #define SET_YEAR 5
 #define SET_MONTH 6
 #define SET_DAY 7
+#define SEND_SERIAL
+
+#ifdef SEND_SERIAL
+#define sendSerial(txt) { Serial.write(txt); }
+#endif
 
 int DIN = 8;
 int CS = 9;
@@ -140,6 +145,7 @@ void setup() {
   
   for (int i=0; i<4; i++) pinMode(btnPin[i], INPUT_PULLUP);
 
+  pinMode(LED_BUILTIN, OUTPUT);
   refreshDisplay();
 
 /*
@@ -269,7 +275,13 @@ void displaySetMinute() {
     } else {
       drawNumber(m, 16, 0, 6);
     }
+}
 
+char buf[256];
+
+void refreshDisplay() {
+  drawNumber(h, 3, hs, 0);
+  drawNumber(m, 1, 0, 1);
 }
 void displaySetYear() {
     int yH = year / 100;
@@ -500,6 +512,24 @@ void readBtn(int btn) {
   }
 }
 
+void blink_LED() {
+  static bool isON = false;
+  static int count = 0;
+
+  count++;
+  if (count == 10) {
+    count = 0;
+    if (isON) {
+      isON = false;
+      digitalWrite(LED_BUILTIN, LOW);
+      sprintf(buf, "%02d:%02d:%02d\r", h, m, s);
+      sendSerial(buf);
+    } else {
+      isON = true;
+      digitalWrite(LED_BUILTIN, HIGH);
+    }
+  }
+}
 void loop() {
   for (int btn=0; btn<4; btn++) {
     readBtn(btn);
@@ -511,4 +541,5 @@ void loop() {
   // delay(20);
 
   // loop_rtc();
+  blink_LED();
 }

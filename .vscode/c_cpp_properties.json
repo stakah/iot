@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/sergio/.platformio/packages/framework-arduino-avr/cores/arduino",
+                "/home/sergio/.platformio/packages/toolchain-atmelavr/avr/include",
+                "/home/sergio/.platformio/packages/framework-arduino-avr/variants/standard"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
