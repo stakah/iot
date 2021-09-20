@@ -17,8 +17,8 @@
 #define SET_YEAR 5
 #define SET_MONTH 6
 #define SET_DAY 7
-#define SEND_SERIAL
 
+#define SEND_SERIAL
 #ifdef SEND_SERIAL
 #define sendSerial(txt) { Serial.write(txt); }
 #endif
@@ -132,9 +132,20 @@ byte digits[10][8]={
 void refreshDisplay();
 void drawNumber(int, int, int, int);
 void tikClock();
+void blink_LED(int);
 
 void setup() {
-  setup_rtc();
+  pinMode(LED_BUILTIN, OUTPUT);
+  while (!Serial); // for Leonardo/Micro/Zero
+
+  if (setup_rtc() == RTC_STATUS_DEVICE_NOT_FOUND) {
+    Serial.println("RTC device not found!");
+    while (1) {
+      blink_LED(40);
+      delay(5);
+    }
+  }
+
   // Serial.begin(9600);
   Serial.println("setup ...");
   for (int d=0; d<4; d++) {
@@ -145,7 +156,6 @@ void setup() {
   
   for (int i=0; i<4; i++) pinMode(btnPin[i], INPUT_PULLUP);
 
-  pinMode(LED_BUILTIN, OUTPUT);
   refreshDisplay();
 
 /*
@@ -279,10 +289,10 @@ void displaySetMinute() {
 
 char buf[256];
 
-void refreshDisplay() {
-  drawNumber(h, 3, hs, 0);
-  drawNumber(m, 1, 0, 1);
-}
+// void refreshDisplay() {
+//   drawNumber(h, 3, hs, 0);
+//   drawNumber(m, 1, 0, 1);
+// }
 void displaySetYear() {
     int yH = year / 100;
     int yL = year % 100;
@@ -512,22 +522,22 @@ void readBtn(int btn) {
   }
 }
 
-void blink_LED() {
+void blink_LED(int onCycle) {
   static bool isON = false;
   static int count = 0;
-
+  int onCycleCount = onCycle >= 0 ? onCycle : 127;
+  int offCycleCount = 256 - onCycle;
   count++;
-  if (count == 10) {
+  if (isON && count == onCycle) {
     count = 0;
-    if (isON) {
-      isON = false;
-      digitalWrite(LED_BUILTIN, LOW);
-      sprintf(buf, "%02d:%02d:%02d\r", h, m, s);
-      sendSerial(buf);
-    } else {
-      isON = true;
-      digitalWrite(LED_BUILTIN, HIGH);
-    }
+    isON = false;
+    digitalWrite(LED_BUILTIN, LOW);
+    sprintf(buf, "%02d:%02d:%02d\r", h, m, s);
+    sendSerial(buf);
+  } else if (!isON && count == offCycleCount) {
+    count = 0;
+    isON = true;
+    digitalWrite(LED_BUILTIN, HIGH);
   }
 }
 void loop() {
@@ -541,5 +551,5 @@ void loop() {
   // delay(20);
 
   // loop_rtc();
-  blink_LED();
+  blink_LED(0);
 }

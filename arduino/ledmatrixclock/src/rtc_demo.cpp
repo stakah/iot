@@ -1,14 +1,18 @@
 // Date and time functions using a DS1307 RTC connected via I2C and Wire lib
 #include <Wire.h>
 #include "RTClib.h"
+#include "rtc_demo.h"
+
 RTC_DS1307 rtc;
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-void setup_rtc () {
+
+
+int setup_rtc () {
  while (!Serial); // for Leonardo/Micro/Zero
  Serial.begin(9600);
  if (! rtc.begin()) {
-   Serial.println("Couldn't find RTC");
-   while (1);
+  //  Serial.println("Couldn't find RTC");
+   return RTC_STATUS_DEVICE_NOT_FOUND;
  }
  Serial.println("setup_rtc ...");
 
@@ -20,6 +24,8 @@ void setup_rtc () {
    // January 21, 2014 at 3am you would call:
    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
  }
+
+ return RTC_STATUS_OK;
 }
 
 void adjust_rtc(int year, int month, int day, int hour, int minute, int second) {
