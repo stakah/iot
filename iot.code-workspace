@@ -18,6 +18,10 @@
 		{
 			"name": "ledmatrixclock",
 			"path": "arduino/ledmatrixclock"
+		},
+		{
+			"name": "es32simplewifi",
+			"path": "esp32/es32simplewifi"
 		}
 	]
 }
