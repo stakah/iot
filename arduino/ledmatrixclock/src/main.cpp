@@ -6,6 +6,12 @@
 //MAX7219 - using Led Control library to display 8x8 bitmap
 #include <LedControl.h>
 
+#define SEND_SERIAL
+
+#ifdef SEND_SERIAL
+#define sendSerial(txt) { Serial.write(txt); }
+#endif
+
 int DIN = 8;
 int CS = 9;
 int CLK = 10;
@@ -108,7 +114,8 @@ void setup() {
     h = 8;
     m = 9;
   }
-
+  
+  pinMode(LED_BUILTIN, OUTPUT);
   refreshDisplay();
 
   TCCR0A=(1<<WGM01);    //Set the CTC mode   
@@ -150,10 +157,11 @@ void drawNumber(int num, int col, int dots, int offset) {
   }
 }
 
+char buf[256];
+
 void refreshDisplay() {
   drawNumber(h, 3, hs, 0);
   drawNumber(m, 1, 0, 1);
-
 }
 
 void tikClock() {
@@ -177,7 +185,26 @@ void tikClock() {
   }
 }
 
+void blink_LED() {
+  static bool isON = false;
+  static int count = 0;
+
+  count++;
+  if (count == 10) {
+    count = 0;
+    if (isON) {
+      isON = false;
+      digitalWrite(LED_BUILTIN, LOW);
+      sprintf(buf, "%02d:%02d:%02d\r", h, m, s);
+      sendSerial(buf);
+    } else {
+      isON = true;
+      digitalWrite(LED_BUILTIN, HIGH);
+    }
+  }
+}
 void loop() {
   delay(200);
   refreshDisplay();
+  blink_LED();
 }
