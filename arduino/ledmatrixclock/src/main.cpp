@@ -12,10 +12,11 @@
 #define sendSerial(txt) { Serial.write(txt); }
 #endif
 
-int DIN = 8;
-int CS = 9;
-int CLK = 10;
-LedControl lc= LedControl(DIN, CLK, CS,4);
+#define DIN  8
+#define CS  9
+#define CLK  10
+#define LED_MODULES 4
+LedControl lc= LedControl(DIN, CLK, CS, LED_MODULES);
 int h,m,s,ms,hs = 0;
 
 byte digits[10][8]={
@@ -101,8 +102,91 @@ byte digits[10][8]={
    B00000000}
 };
 
+byte smallDigits[10][8]={
+  {B00000000, //0
+   B00000000,
+   B00000111,
+   B00000101,
+   B00000101,
+   B00000101,
+   B00000111,
+   B00000000},
+  {B00000000, //1
+   B00000000,
+   B00000110,
+   B00000010,
+   B00000010,
+   B00000010,
+   B00000111,
+   B00000000},
+  {B00000000, //2
+   B00000000,
+   B00000111,
+   B00000001,
+   B00000111,
+   B00000100,
+   B00000111,
+   B00000000},
+  {B00000000, //3
+   B00000000,
+   B00000111,
+   B00000001,
+   B00000111,
+   B00000001,
+   B00000111,
+   B00000000},
+  {B00000000, //4
+   B00000000,
+   B00000101,
+   B00000101,
+   B00000111,
+   B00000001,
+   B00000001,
+   B00000000},
+  {B00000000, //5
+   B00000000,
+   B00000111,
+   B00000100,
+   B00000110,
+   B00000001,
+   B00000111,
+   B00000000},
+  {B00000000, //6
+   B00000000,
+   B00000111,
+   B00000100,
+   B00000111,
+   B00000101,
+   B00000111,
+   B00000000},
+  {B00000000, //7
+   B00000000,
+   B00000111,
+   B00000001,
+   B00000010,
+   B00000100,
+   B00000100,
+   B00000000},
+  {B00000000, //8
+   B00000000,
+   B00000111,
+   B00000101,
+   B00000111,
+   B00000101,
+   B00000111,
+   B00000000},
+  {B00000000, //9
+   B00000000,
+   B00000111,
+   B00000101,
+   B00000111,
+   B00000001,
+   B00000111,
+   B00000000}
+};
+
 void refreshDisplay();
-void drawNumber(int, int, int, int);
+void drawNumber(int, int, int, int, byte[LED_MODULES][8]);
 void tikClock();
 
 void setup() {
@@ -141,23 +225,174 @@ ISR(TIMER0_COMPA_vect){    //This is the interrupt request
   tikClock();
 }
 
-void drawNumber(int num, int col, int dots, int offset) {
+void drawLines(byte modules[LED_MODULES][8]){
+  for (int m=0; m<LED_MODULES; m++){
+    for (int row=0; row<8; row++){
+      lc.setRow(m, row, modules[m][row]);
+    }
+  }
+}
+
+void drawNumber(int num, int x, int dots, int charWidth, byte modules[LED_MODULES][8]) {
+  int col = x / 8;
+  int h,l = 0;
   int d = num / 10;
   int u = num % 10;
+  int w = (8 - charWidth);
+  int dx = ((col+1) * 8 -1) - x;
 
   for (int row=0; row<8; row++) {
-    int vd = digits[d][row] >> offset;
-    int vu = digits[u][row] >> offset;
+    int vd = digits[d][row] << w;
+    int vu = digits[u][row] << w;
+    int line = (vd << (8)) | (vu << w);
+    h = ((line >> 8) >> dx);
+    l = (line >> dx) & 0x00FF;
+    int k = (line << (8-dx)) & 0x00FF;
     if (dots > 0 && (row == 2 || row == 4)) {
-      vu |= 1;
+      l |= (1 << 3);
     }
-    lc.setRow(col, row, vd);
-    lc.setRow(col-1, row, vu);
+    if (debug && row == 7) {
+      h |= btnHLed;
+      l |= btnLLed;
+    }
+
+    modules[col][row] |= h;
+     modules[col-1][row] |= l;
+    if (col>=2) modules[col-2][row] |= k;
+    // lc.setRow(col, row, h);
+    // lc.setRow(col-1, row, l);
 
   }
 }
 
+void drawSmallNumber(int num, int x, int dots, int charWidth, byte modules[LED_MODULES][8]) {
+  int col = x / 8;
+  int h,l = 0;
+  int d = num / 10;
+  int u = num % 10;
+  int w = (8 - charWidth);
+  int dx = ((col+1) * 8 -1) - x;
+
+  byte btnHLed = 1 << mode[col];
+  byte btnLLed = 1 << mode[col-1];
+
+  for (int row=0; row<8; row++) {
+    int vd = smallDigits[d][row] << w;
+    int vu = smallDigits[u][row] << w;
+    int line = (vd << (8)) | (vu << w);
+    h = ((line >> 8) >> dx);
+    l = (line >> dx) & 0x00FF;
+    int k = (line << (8-dx)) & 0x00FF;
+    if (dots > 0 && (row == 2 || row == 4)) {
+      l |= (1 << 3);
+    }
+    if (debug && row == 7) {
+      h |= btnHLed;
+      l |= btnLLed;
+    }
+
+    modules[col][row] |= h;
+     modules[col-1][row] |= l;
+    if (col>=2) modules[col-2][row] |= k;
+    // lc.setRow(col, row, h);
+    // lc.setRow(col-1, row, l);
+
+  }
+}
+
+void displayTime() {
+  byte modules[LED_MODULES][8] = {0};
+  drawNumber(h, 31, hs, 6, modules);
+  drawNumber(m, 19, 0, 6, modules);
+  drawSmallNumber(s, 7,0,4,modules);
+  drawLines(modules);
+}
+
+void displayYear() {
+  int yH = year / 100;
+  int yL = year % 100;
+  byte modules[LED_MODULES][8] = {0};
+    drawNumber(yH, 31, 0, 6, modules);
+    drawNumber(yL, 15, 0, 6, modules);
+  drawLines(modules);
+}
+void displayDate() {
+  byte modules[LED_MODULES][8] = {0};
+    drawNumber(month, 31, 0, 6, modules);
+    drawNumber(day, 15, 0, 6, modules);
+  drawLines(modules);
+}
+void displaySetHour() {
+  byte modules[LED_MODULES][8] = {0};
+    if (hs == 0) {
+      lc.clearDisplay(3);
+      lc.clearDisplay(2);
+    } else {
+      drawNumber(h, 31, hs, 6, modules);
+    }
+    drawNumber(m, 15, 0, 6, modules);
+  drawLines(modules);
+ 
+}
+void displaySetMinute() {
+  byte modules[LED_MODULES][8] = {0};
+    drawNumber(h, 31, hs, 6, modules);
+    if (hs == 0) {
+      lc.clearDisplay(1);
+      lc.clearDisplay(0);
+    } else {
+      drawNumber(m, 15, 0, 6, modules);
+    }
+  drawLines(modules);
+}
+
 char buf[256];
+
+// void refreshDisplay() {
+//   drawNumber(h, 3, hs, 0);
+//   drawNumber(m, 1, 0, 1);
+// }
+void displaySetYear() {
+  byte modules[LED_MODULES][8] = {0};
+    int yH = year / 100;
+    int yL = year % 100;
+ 
+    if (hs == 0) {
+      lc.clearDisplay(3);
+      lc.clearDisplay(2);
+      lc.clearDisplay(1);
+      lc.clearDisplay(0);
+    } else {
+     drawNumber(yH, 31, 0, 6, modules);
+    drawNumber(yL, 15, 0, 6, modules);
+   }
+  drawLines(modules);
+
+}
+void displaySetMonth() {
+  byte modules[LED_MODULES][8] = {0};
+    drawNumber(day, 15, 0, 6, modules);
+    if (hs == 0) {
+      lc.clearDisplay(3);
+      lc.clearDisplay(2);
+    } else {
+      drawNumber(month, 31, 0, 6, modules);
+    }
+  drawLines(modules);
+
+}
+void displaySetDay() {
+  byte modules[LED_MODULES][8] = {0};
+    drawNumber(month, 31, 0, 6, modules);
+    if (hs == 0) {
+      lc.clearDisplay(1);
+      lc.clearDisplay(0);
+    } else {
+      drawNumber(day, 15, 0, 6, modules);
+    }
+  drawLines(modules);
+
+}
 
 void refreshDisplay() {
   drawNumber(h, 3, hs, 0);
