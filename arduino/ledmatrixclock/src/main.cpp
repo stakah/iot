@@ -214,7 +214,7 @@ byte smallDigits[10][8]={
 };
 
 void refreshDisplay();
-void drawNumber(int, int, int, int, byte[LED_MODULES][8]);
+void drawNumber(byte[10][8], int, int, int, int, byte[LED_MODULES][8]);
 void tikClock();
 void blink_LED(int);
 
@@ -312,7 +312,7 @@ void drawLines(byte modules[LED_MODULES][8]){
   }
 }
 
-void drawNumber(int num, int x, int dots, int charWidth, byte modules[LED_MODULES][8]) {
+void drawNumber(byte digits[10][8], int num, int x, int dots, int charWidth, byte modules[LED_MODULES][8]) {
   int col = x / 8;
   int h,l = 0;
   int d = num / 10;
@@ -347,46 +347,11 @@ void drawNumber(int num, int x, int dots, int charWidth, byte modules[LED_MODULE
   }
 }
 
-void drawSmallNumber(int num, int x, int dots, int charWidth, byte modules[LED_MODULES][8]) {
-  int col = x / 8;
-  int h,l = 0;
-  int d = num / 10;
-  int u = num % 10;
-  int w = (8 - charWidth);
-  int dx = ((col+1) * 8 -1) - x;
-
-  byte btnHLed = 1 << mode[col];
-  byte btnLLed = 1 << mode[col-1];
-
-  for (int row=0; row<8; row++) {
-    int vd = smallDigits[d][row] << w;
-    int vu = smallDigits[u][row] << w;
-    int line = (vd << (8)) | (vu << w);
-    h = ((line >> 8) >> dx);
-    l = (line >> dx) & 0x00FF;
-    int k = (line << (8-dx)) & 0x00FF;
-    if (dots > 0 && (row == 2 || row == 4)) {
-      l |= (1 << 3);
-    }
-    if (debug && row == 7) {
-      h |= btnHLed;
-      l |= btnLLed;
-    }
-
-    modules[col][row] |= h;
-     modules[col-1][row] |= l;
-    if (col>=2) modules[col-2][row] |= k;
-    // lc.setRow(col, row, h);
-    // lc.setRow(col-1, row, l);
-
-  }
-}
-
 void displayTime() {
   byte modules[LED_MODULES][8] = {0};
-  drawNumber(h, 31, hs, 6, modules);
-  drawNumber(m, 19, 0, 6, modules);
-  drawSmallNumber(s, 7,0,4,modules);
+  drawNumber(digits, h, 31, hs, 6, modules);
+  drawNumber(digits, m, 19, 0, 6, modules);
+  drawNumber(smallDigits, s, 7,0,4,modules);
   drawLines(modules);
 }
 
@@ -394,14 +359,14 @@ void displayYear() {
   int yH = year / 100;
   int yL = year % 100;
   byte modules[LED_MODULES][8] = {0};
-    drawNumber(yH, 31, 0, 6, modules);
-    drawNumber(yL, 15, 0, 6, modules);
+    drawNumber(digits, yH, 31, 0, 6, modules);
+    drawNumber(digits, yL, 15, 0, 6, modules);
   drawLines(modules);
 }
 void displayDate() {
   byte modules[LED_MODULES][8] = {0};
-    drawNumber(month, 31, 0, 6, modules);
-    drawNumber(day, 15, 0, 6, modules);
+    drawNumber(digits, month, 31, 0, 6, modules);
+    drawNumber(digits, day, 15, 0, 6, modules);
   drawLines(modules);
 }
 void displaySetHour() {
@@ -410,20 +375,20 @@ void displaySetHour() {
       lc.clearDisplay(3);
       lc.clearDisplay(2);
     } else {
-      drawNumber(h, 31, hs, 6, modules);
+      drawNumber(digits, h, 31, hs, 6, modules);
     }
-    drawNumber(m, 15, 0, 6, modules);
+    drawNumber(digits, m, 15, 0, 6, modules);
   drawLines(modules);
  
 }
 void displaySetMinute() {
   byte modules[LED_MODULES][8] = {0};
-    drawNumber(h, 31, hs, 6, modules);
+    drawNumber(digits, h, 31, hs, 6, modules);
     if (hs == 0) {
       lc.clearDisplay(1);
       lc.clearDisplay(0);
     } else {
-      drawNumber(m, 15, 0, 6, modules);
+      drawNumber(digits, m, 15, 0, 6, modules);
     }
   drawLines(modules);
 }
@@ -445,32 +410,32 @@ void displaySetYear() {
       lc.clearDisplay(1);
       lc.clearDisplay(0);
     } else {
-     drawNumber(yH, 31, 0, 6, modules);
-    drawNumber(yL, 15, 0, 6, modules);
+     drawNumber(digits, yH, 31, 0, 6, modules);
+    drawNumber(digits, yL, 15, 0, 6, modules);
    }
   drawLines(modules);
 
 }
 void displaySetMonth() {
   byte modules[LED_MODULES][8] = {0};
-    drawNumber(day, 15, 0, 6, modules);
+    drawNumber(digits, day, 15, 0, 6, modules);
     if (hs == 0) {
       lc.clearDisplay(3);
       lc.clearDisplay(2);
     } else {
-      drawNumber(month, 31, 0, 6, modules);
+      drawNumber(digits, month, 31, 0, 6, modules);
     }
   drawLines(modules);
 
 }
 void displaySetDay() {
   byte modules[LED_MODULES][8] = {0};
-    drawNumber(month, 31, 0, 6, modules);
+    drawNumber(digits, month, 31, 0, 6, modules);
     if (hs == 0) {
       lc.clearDisplay(1);
       lc.clearDisplay(0);
     } else {
-      drawNumber(day, 15, 0, 6, modules);
+      drawNumber(digits, day, 15, 0, 6, modules);
     }
   drawLines(modules);
 
