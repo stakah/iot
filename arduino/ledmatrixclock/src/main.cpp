@@ -304,7 +304,6 @@ ISR(TIMER1_COMPA_vect){    //This is the interrupt request
   // tikClock();
 }
 
-<<<<<<< HEAD
 void drawLines(byte modules[LED_MODULES][8]){
   for (int m=0; m<LED_MODULES; m++){
     for (int row=0; row<8; row++){
@@ -347,14 +346,6 @@ void drawNumber(int num, int x, int dots, int charWidth, byte modules[LED_MODULE
 
 void drawSmallNumber(int num, int x, int dots, int charWidth, byte modules[LED_MODULES][8]) {
   int col = x / 8;
-=======
-void drawNumber(int num, int x, int dots, int charWidth) {
-  int col = 3 - x / 8;
-  int dx = - (x % 8) + 1;
-  int w = 8 - charWidth;
-  int dxu = dx + w;
-  int dxd = dxu + charWidth;
->>>>>>> v0.4
   int h,l = 0;
   int d = num / 10;
   int u = num % 10;
@@ -368,7 +359,6 @@ void drawNumber(int num, int x, int dots, int charWidth) {
   byte btnLLed = 1 << mode[col-1];
 
   for (int row=0; row<8; row++) {
-<<<<<<< HEAD
     int vd = smallDigits[d][row] << w;
     int vu = smallDigits[u][row] << w;
     int line = (vd << (8)) | (vu << w);
@@ -388,29 +378,11 @@ void drawNumber(int num, int x, int dots, int charWidth) {
     if (col>=2) modules[col-2][row] |= k;
     // lc.setRow(col, row, h);
     // lc.setRow(col-1, row, l);
-=======
-    int vd = digits[d][row] << w;
-    int vu = digits[u][row] << w;
-    int line = (vu << dxu) | (vd << dxd);
-    h = (line & 0xFF00) >> 8;
-    l = (line & 0x00FF);
-    if (dots > 0 && (row == 2 || row == 4)) {
-      l |= 2;
-    }
-    if (row == 7) {
-      h |= btnHLed;
-      l |= btnLLed;
-    }
-
-    lc.setRow(col, row, h);
-    lc.setRow(col-1, row, l);
->>>>>>> v0.4
 
   }
 }
 
 void displayTime() {
-<<<<<<< HEAD
   byte modules[LED_MODULES][8] = {0};
   drawNumber(h, 31, hs, 6, modules);
   drawNumber(m, 19, 0, 6, modules);
@@ -434,27 +406,10 @@ void displayDate() {
 }
 void displaySetHour() {
   byte modules[LED_MODULES][8] = {0};
-=======
-    drawNumber(h, 2, hs, 6);
-    drawNumber(m, 16, 0, 6);
-}
-void displayYear() {
-  int yH = year / 100;
-  int yL = year % 100;
-    drawNumber(yH, 2, 0, 6);
-    drawNumber(yL, 16, 0, 6);
-}
-void displayDate() {
-    drawNumber(month, 2, 0, 6);
-    drawNumber(day, 16, 0, 6);
-}
-void displaySetHour() {
->>>>>>> v0.4
     if (hs == 0) {
       lc.clearDisplay(3);
       lc.clearDisplay(2);
     } else {
-<<<<<<< HEAD
       drawNumber(h, 31, hs, 6, modules);
     }
     drawNumber(m, 15, 0, 6, modules);
@@ -464,27 +419,13 @@ void displaySetHour() {
 void displaySetMinute() {
   byte modules[LED_MODULES][8] = {0};
     drawNumber(h, 31, hs, 6, modules);
-=======
-      drawNumber(h, 2, hs, 6);
-    }
-    drawNumber(m, 16, 0, 6);
- 
-}
-void displaySetMinute() {
-    drawNumber(h, 2, hs, 6);
->>>>>>> v0.4
     if (hs == 0) {
       lc.clearDisplay(1);
       lc.clearDisplay(0);
     } else {
-<<<<<<< HEAD
       drawNumber(m, 15, 0, 6, modules);
     }
   drawLines(modules);
-=======
-      drawNumber(m, 16, 0, 6);
-    }
->>>>>>> v0.4
 }
 
 char buf[256];
@@ -494,10 +435,7 @@ char buf[256];
 //   drawNumber(m, 1, 0, 1);
 // }
 void displaySetYear() {
-<<<<<<< HEAD
   byte modules[LED_MODULES][8] = {0};
-=======
->>>>>>> v0.4
     int yH = year / 100;
     int yL = year % 100;
  
@@ -507,7 +445,6 @@ void displaySetYear() {
       lc.clearDisplay(1);
       lc.clearDisplay(0);
     } else {
-<<<<<<< HEAD
      drawNumber(yH, 31, 0, 6, modules);
     drawNumber(yL, 15, 0, 6, modules);
    }
@@ -542,12 +479,6 @@ void displaySetDay() {
 void refreshDisplay() {
   drawNumber(h, 3, hs, 0);
   drawNumber(m, 1, 0, 1);
-=======
-     drawNumber(yH, 2, 0, 6);
-    drawNumber(yL, 16, 0, 6);
-   }
-
->>>>>>> v0.4
 }
 void displaySetMonth() {
     drawNumber(day, 16, 0, 6);
