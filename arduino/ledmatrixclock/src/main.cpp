@@ -320,6 +320,9 @@ void drawNumber(int num, int x, int dots, int charWidth, byte modules[LED_MODULE
   int w = (8 - charWidth);
   int dx = ((col+1) * 8 -1) - x;
 
+  byte btnHLed = 1 << mode[col];
+  byte btnLLed = 1 << mode[col-1];
+
   for (int row=0; row<8; row++) {
     int vd = digits[d][row] << w;
     int vu = digits[u][row] << w;
@@ -351,9 +354,6 @@ void drawSmallNumber(int num, int x, int dots, int charWidth, byte modules[LED_M
   int u = num % 10;
   int w = (8 - charWidth);
   int dx = ((col+1) * 8 -1) - x;
-
-  byte btnHLed = 1 << mode[col];
-  byte btnLLed = 1 << mode[col-1];
 
   byte btnHLed = 1 << mode[col];
   byte btnLLed = 1 << mode[col-1];
@@ -473,31 +473,6 @@ void displaySetDay() {
       drawNumber(day, 15, 0, 6, modules);
     }
   drawLines(modules);
-
-}
-
-void refreshDisplay() {
-  drawNumber(h, 3, hs, 0);
-  drawNumber(m, 1, 0, 1);
-}
-void displaySetMonth() {
-    drawNumber(day, 16, 0, 6);
-    if (hs == 0) {
-      lc.clearDisplay(3);
-      lc.clearDisplay(2);
-    } else {
-      drawNumber(month, 2, 0, 6);
-    }
-
-}
-void displaySetDay() {
-    drawNumber(month, 2, 0, 6);
-    if (hs == 0) {
-      lc.clearDisplay(1);
-      lc.clearDisplay(0);
-    } else {
-      drawNumber(day, 16, 0, 6);
-    }
 
 }
 
