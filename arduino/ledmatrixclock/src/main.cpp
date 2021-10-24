@@ -6,8 +6,19 @@
 //MAX7219 - using Led Control library to display 8x8 bitmap
 #include <LedControl.h>
 
-#define SEND_SERIAL
+#include <rtc_demo.h>
 
+// btn 0
+#define DISPLAY_TIME 0
+#define DISPLAY_YEAR 1
+#define DISPLAY_DATE 2
+#define SET_HOUR 3
+#define SET_MINUTE 4
+#define SET_YEAR 5
+#define SET_MONTH 6
+#define SET_DAY 7
+
+#define SEND_SERIAL
 #ifdef SEND_SERIAL
 #define sendSerial(txt) { Serial.write(txt); }
 #endif
@@ -18,87 +29,104 @@
 #define LED_MODULES 4
 LedControl lc= LedControl(DIN, CLK, CS, LED_MODULES);
 int h,m,s,ms,hs = 0;
+int year, month, day = 0;
+
+const int debug = 0; // 1-debug messages, 0-no debug messages
+int btnPin[4] = {2, 3, 4, 5};
+int btnState[4] = {HIGH, HIGH, HIGH, HIGH};
+int currentRead[4] = {0, 0, 0, 0};
+int mode[4] = {DISPLAY_TIME, 0, 0, 0};
+int btnModes[4] = {8, 2, 2, 2};
+
+
+unsigned long debounce[4] = {0, 0, 0, 0};
+unsigned long debounceDelay = 50;
+unsigned long refreshInterval = 200L;
+int blinkDotsN = 1000L / refreshInterval / 2;
+int blinkDotsC = 0;
+
+int reset_time = 0; // 0 = NO, 1 = YES
 
 byte digits[10][8]={
-  {B01111000, //0
-   B11000100,
-   B10100100,
-   B10110100,
-   B10010100,
-   B10001100,
-   B01111000,
+  {B00001110, //0
+   B00010001,
+   B00010001,
+   B00010101,
+   B00010001,
+   B00010001,
+   B00001110,
    B00000000},
-  {B00010000, //1
-   B01110000,
-   B00010000,
-   B00010000,
-   B00010000,
-   B00010000,
-   B01111100,
+  {B00000010, //1
+   B00001110,
+   B00000010,
+   B00000010,
+   B00000010,
+   B00000010,
+   B00001111,
    B00000000},
-  {B01111000, //2
-   B10000100,
+  {B00001110, //2
+   B00010001,
+   B00000001,
+   B00001110,
+   B00010000,
+   B00010000,
+   B00011111,
+   B00000000},
+  {B00001110, //3
+   B00010001,
+   B00000001,
+   B00000110,
+   B00000001,
+   B00010001,
+   B00001110,
+   B00000000},
+  {B00000010, //4
+   B00000110,
+   B00001010,
+   B00010010,
+   B00011111,
+   B00000010,
+   B00000010,
+   B00000000},
+  {B00011111, //5
+   B00010000,
+   B00010110,
+   B00011001,
+   B00000001,
+   B00010001,
+   B00001110,
+   B00000000},
+  {B00001110, //6
+   B00010001,
+   B00010000,
+   B00011110,
+   B00010001,
+   B00010001,
+   B00001110,
+   B00000000},
+  {B00011111, //7
+   B00010001,
+   B00000010,
+   B00000010,
    B00000100,
-   B01111000,
-   B10000000,
-   B10000000,
-   B11111100,
-   B00000000},
-  {B01111000, //3
-   B10000100,
    B00000100,
-   B00111000,
    B00000100,
-   B10000100,
-   B01111000,
    B00000000},
-  {B00010000, //4
-   B00110000,
-   B01010000,
-   B10010000,
-   B11111100,
-   B00010000,
-   B00010000,
+  {B00001110, //8
+   B00010001,
+   B00010001,
+   B00001110,
+   B00010001,
+   B00010001,
+   B00001110,
    B00000000},
-  {B11111100, //5
-   B10000000,
-   B10111000,
-   B11000100,
-   B00000100,
-   B10000100,
-   B01111000,
-   B00000000},
-  {B01111000, //6
-   B10000100,
-   B10000000,
-   B11111000,
-   B10000100,
-   B10000100,
-   B01111000,
-   B00000000},
-  {B11111000, //7
-   B10001000,
-   B00010000,
-   B00010000,
-   B00100000,
-   B00100000,
-   B00100000,
-   B00000000},
-  {B01111000, //8
-   B10000100,
-   B10000100,
-   B11111100,
-   B10000100,
-   B10000100,
-   B01111000,
-   B00000000},
-  {B01111000, //9
-   B10000100,
-   B10000100,
-   B01111100,
-   B00000100,
-   B10000100,
-   B01111000,
+  {B00001110, //9
+   B00010001,
+   B00010001,
+   B00001111,
+   B00000001,
+   B00010001,
+   B00001110,
    B00000000}
 };
 
@@ -188,20 +216,33 @@ byte smallDigits[10][8]={
 void refreshDisplay();
 void drawNumber(int, int, int, int, byte[LED_MODULES][8]);
 void tikClock();
+void blink_LED(int);
 
 void setup() {
-  Serial.begin(9600);
+  pinMode(LED_BUILTIN, OUTPUT);
+  while (!Serial); // for Leonardo/Micro/Zero
+
+  if (setup_rtc() == RTC_STATUS_DEVICE_NOT_FOUND) {
+    Serial.println("RTC device not found!");
+    while (1) {
+      blink_LED(40);
+      delay(5);
+    }
+  }
+
+  // Serial.begin(9600);
+  Serial.println("setup ...");
   for (int d=0; d<4; d++) {
     lc.shutdown(d,false);
     lc.setIntensity(d,0);
     lc.clearDisplay(d);
-    h = 8;
-    m = 9;
   }
   
-  pinMode(LED_BUILTIN, OUTPUT);
+  for (int i=0; i<4; i++) pinMode(btnPin[i], INPUT_PULLUP);
+
   refreshDisplay();
 
+/*
   TCCR0A=(1<<WGM01);    //Set the CTC mode   
 
   // OCR0A = (cLK)/PSC) * T - 1
@@ -218,13 +259,52 @@ void setup() {
   
   TCCR0B|=(1<<CS01);    //Set the prescale 1/64 clock
   TCCR0B|=(1<<CS00);
+*/
+
+//set timer1 interrupt at 1Hz
+  TCCR1A = 0;// set entire TCCR1A register to 0
+  TCCR1B = 0;// same for TCCR1B
+  TCNT1  = 0;//initialize counter value to 0
+  // set compare match register for 1hz increments
+  OCR1A = 15624;// = (16*10^6) / (1*1024) - 1 (must be <65536)
+  // set compare match register for 400hz increments (T = 1/400 = 2.5ms)
+  // OCR1A = 39999;// = (16*10^6) / (400*1) - 1 (must be <65536)
+  // turn on CTC mode
+  TCCR1B |= (1 << WGM12);
+  // Clock Select Bit Description
+  // +----+----+----+--------------------------------------------------------+
+  // |CS12|CS11|CS10| Description                                            |
+  // +----+----+----+--------------------------------------------------------+
+  // |  0 |  0 |  0 | No clock source (Timer/Counter stopped)                |
+  // |  0 |  0 |  1 | clk/1 (No prescaling)                                  |
+  // |  0 |  1 |  0 | clk/8 (From prescaler)                                 |
+  // |  0 |  1 |  1 | clk/64 (From prescaler)                                |
+  // |  1 |  0 |  0 | clk/256 (From prescaler)                               |
+  // |  1 |  0 |  1 | clk/1024 (From prescaler)                              |
+  // |  1 |  1 |  0 | External clock source on T1 pin. Clock on falling edge |
+  // |  1 |  1 |  1 | External clock source on T1 pin. Clock on rising edge  |
+  // +----+----+----+--------------------------------------------------------+
+  // Set CS10 for no prescaler
+  TCCR1B |= (1 << CS10 | 1 << CS12);  
+  // enable timer compare interrupt
+  TIMSK1 |= (1 << OCIE1A);
+
+
+    // h = 12;
+    // m = 34;
+
+    if (debug) {
+    Serial.print("Clock started: ");
+    Serial.print(h); Serial.print(":"); Serial.println(m);
+    }
 
 }
 
-ISR(TIMER0_COMPA_vect){    //This is the interrupt request
-  tikClock();
+ISR(TIMER1_COMPA_vect){    //This is the interrupt request
+  // tikClock();
 }
 
+<<<<<<< HEAD
 void drawLines(byte modules[LED_MODULES][8]){
   for (int m=0; m<LED_MODULES; m++){
     for (int row=0; row<8; row++){
@@ -267,6 +347,14 @@ void drawNumber(int num, int x, int dots, int charWidth, byte modules[LED_MODULE
 
 void drawSmallNumber(int num, int x, int dots, int charWidth, byte modules[LED_MODULES][8]) {
   int col = x / 8;
+=======
+void drawNumber(int num, int x, int dots, int charWidth) {
+  int col = 3 - x / 8;
+  int dx = - (x % 8) + 1;
+  int w = 8 - charWidth;
+  int dxu = dx + w;
+  int dxd = dxu + charWidth;
+>>>>>>> v0.4
   int h,l = 0;
   int d = num / 10;
   int u = num % 10;
@@ -276,7 +364,11 @@ void drawSmallNumber(int num, int x, int dots, int charWidth, byte modules[LED_M
   byte btnHLed = 1 << mode[col];
   byte btnLLed = 1 << mode[col-1];
 
+  byte btnHLed = 1 << mode[col];
+  byte btnLLed = 1 << mode[col-1];
+
   for (int row=0; row<8; row++) {
+<<<<<<< HEAD
     int vd = smallDigits[d][row] << w;
     int vu = smallDigits[u][row] << w;
     int line = (vd << (8)) | (vu << w);
@@ -296,11 +388,29 @@ void drawSmallNumber(int num, int x, int dots, int charWidth, byte modules[LED_M
     if (col>=2) modules[col-2][row] |= k;
     // lc.setRow(col, row, h);
     // lc.setRow(col-1, row, l);
+=======
+    int vd = digits[d][row] << w;
+    int vu = digits[u][row] << w;
+    int line = (vu << dxu) | (vd << dxd);
+    h = (line & 0xFF00) >> 8;
+    l = (line & 0x00FF);
+    if (dots > 0 && (row == 2 || row == 4)) {
+      l |= 2;
+    }
+    if (row == 7) {
+      h |= btnHLed;
+      l |= btnLLed;
+    }
+
+    lc.setRow(col, row, h);
+    lc.setRow(col-1, row, l);
+>>>>>>> v0.4
 
   }
 }
 
 void displayTime() {
+<<<<<<< HEAD
   byte modules[LED_MODULES][8] = {0};
   drawNumber(h, 31, hs, 6, modules);
   drawNumber(m, 19, 0, 6, modules);
@@ -324,10 +434,27 @@ void displayDate() {
 }
 void displaySetHour() {
   byte modules[LED_MODULES][8] = {0};
+=======
+    drawNumber(h, 2, hs, 6);
+    drawNumber(m, 16, 0, 6);
+}
+void displayYear() {
+  int yH = year / 100;
+  int yL = year % 100;
+    drawNumber(yH, 2, 0, 6);
+    drawNumber(yL, 16, 0, 6);
+}
+void displayDate() {
+    drawNumber(month, 2, 0, 6);
+    drawNumber(day, 16, 0, 6);
+}
+void displaySetHour() {
+>>>>>>> v0.4
     if (hs == 0) {
       lc.clearDisplay(3);
       lc.clearDisplay(2);
     } else {
+<<<<<<< HEAD
       drawNumber(h, 31, hs, 6, modules);
     }
     drawNumber(m, 15, 0, 6, modules);
@@ -337,13 +464,27 @@ void displaySetHour() {
 void displaySetMinute() {
   byte modules[LED_MODULES][8] = {0};
     drawNumber(h, 31, hs, 6, modules);
+=======
+      drawNumber(h, 2, hs, 6);
+    }
+    drawNumber(m, 16, 0, 6);
+ 
+}
+void displaySetMinute() {
+    drawNumber(h, 2, hs, 6);
+>>>>>>> v0.4
     if (hs == 0) {
       lc.clearDisplay(1);
       lc.clearDisplay(0);
     } else {
+<<<<<<< HEAD
       drawNumber(m, 15, 0, 6, modules);
     }
   drawLines(modules);
+=======
+      drawNumber(m, 16, 0, 6);
+    }
+>>>>>>> v0.4
 }
 
 char buf[256];
@@ -353,7 +494,10 @@ char buf[256];
 //   drawNumber(m, 1, 0, 1);
 // }
 void displaySetYear() {
+<<<<<<< HEAD
   byte modules[LED_MODULES][8] = {0};
+=======
+>>>>>>> v0.4
     int yH = year / 100;
     int yL = year % 100;
  
@@ -363,6 +507,7 @@ void displaySetYear() {
       lc.clearDisplay(1);
       lc.clearDisplay(0);
     } else {
+<<<<<<< HEAD
      drawNumber(yH, 31, 0, 6, modules);
     drawNumber(yL, 15, 0, 6, modules);
    }
@@ -397,16 +542,88 @@ void displaySetDay() {
 void refreshDisplay() {
   drawNumber(h, 3, hs, 0);
   drawNumber(m, 1, 0, 1);
+=======
+     drawNumber(yH, 2, 0, 6);
+    drawNumber(yL, 16, 0, 6);
+   }
+
+>>>>>>> v0.4
+}
+void displaySetMonth() {
+    drawNumber(day, 16, 0, 6);
+    if (hs == 0) {
+      lc.clearDisplay(3);
+      lc.clearDisplay(2);
+    } else {
+      drawNumber(month, 2, 0, 6);
+    }
+
+}
+void displaySetDay() {
+    drawNumber(month, 2, 0, 6);
+    if (hs == 0) {
+      lc.clearDisplay(1);
+      lc.clearDisplay(0);
+    } else {
+      drawNumber(day, 16, 0, 6);
+    }
+
 }
 
-void tikClock() {
+void refreshDisplay() {
+  static unsigned long previousMillis = millis();
+  unsigned long currentMillis = millis();
 
-  ms = (ms + 1) % 500;
+  if (currentMillis - previousMillis >= refreshInterval) {
+    previousMillis = currentMillis;
+    blinkDotsC = (blinkDotsC + 1) % blinkDotsN;
 
-  if (ms == 0) {
-    hs = (hs + 1) % 2;
+    if (blinkDotsC == 0) hs = (hs + 1) % 2;
 
-    if (hs == 0) {
+    switch(mode[0]) {
+      case DISPLAY_TIME:
+        if (reset_time == 1) {
+          reset_time = 0;
+          s = 0;
+          adjust_rtc(year, month, day, h, m, s);
+        }
+        displayTime();
+        break;
+      case DISPLAY_YEAR:
+        displayYear();
+        break;
+      case DISPLAY_DATE:
+        displayDate();
+        break;
+      case SET_HOUR:
+        reset_time = 1;
+        displaySetHour();
+        break;
+      case SET_MINUTE:
+        reset_time = 1;
+        displaySetMinute();
+        break;
+      case SET_YEAR:
+        displaySetYear();
+        break;
+      case SET_MONTH:
+        displaySetMonth();
+        break;
+      case SET_DAY:
+        displaySetDay();
+        break;
+    }
+    if (debug) {
+    Serial.print("previousMillis:");Serial.print(previousMillis);
+    Serial.print(" currentMillis:");Serial.print(currentMillis);
+
+    Serial.print("millis:");Serial.print(millis());
+    Serial.println();
+    }
+  }
+}
+
+void tikClock1Hz() {
       s = (s + 1) % 60;
 
       if (s == 0) {
@@ -416,30 +633,164 @@ void tikClock() {
           h = (h + 1) % 24;
         }
       }
+
+}
+
+void tikClock2Hz() {
+    ms = (ms + 1) % 2;
+    if (ms == 0) {
+      tikClock1Hz();      
+    }
+
+}
+
+void tikClock400Hz() {
+  ms = (ms + 1) % 400;
+
+  if (ms == 0) {
+    tikClock1Hz();
+  }
+}
+
+void tikClock() {
+  // tikClock2Hz();
+  tikClock1Hz();
+}
+
+void stateHandler() {
+  switch (mode[0]) {
+    case SET_HOUR:
+        s = 0;
+      if (btnState[3] == LOW) {
+        h = (h + 23) % 24;
+        adjust_rtc(year, month, day, h, m, s);
+      } else if (btnState[2] == LOW) {
+        h = (h + 1) % 24;
+        adjust_rtc(year, month, day, h, m, s);
+      }
+      break;
+    case SET_MINUTE:
+        s = 0;
+      if (btnState[3] == LOW) {
+        m = (m + 59) % 60;
+        adjust_rtc(year, month, day, h, m, s);
+      } else if (btnState[2] == LOW) {
+        m = (m + 1) % 60;
+        adjust_rtc(year, month, day, h, m, s);
+      }
+      break;
+    case SET_YEAR:
+      if (btnState[3] == LOW) {
+        year = (year + 2099) % 2100;
+        adjust_rtc(year, month, day, h, m, s);
+      } else if (btnState[2] == LOW) {
+        year = (year + 1) % 2100;
+        adjust_rtc(year, month, day, h, m, s);
+      }
+      break;
+    case SET_MONTH:
+      if (btnState[3] == LOW) {
+        month = ((month - 1) + 11) % 12 + 1;
+        adjust_rtc(year, month, day, h, m, s);
+      } else if (btnState[2] == LOW) {
+        month = month % 12 + 1;
+        adjust_rtc(year, month, day, h, m, s);
+      }
+      break;
+    case SET_DAY:
+      bool isLeapYear = testLeapYear(year);
+      int modulo = 30;
+
+      switch (month) {
+        case 1:
+        case 3:
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+        case 12: 
+          modulo = 31;
+          break;
+        case 2:
+          modulo = isLeapYear ? 29 : 28;
+          break;
+      }
+
+      if (btnState[3] == LOW) {
+        day = (day - 1 + (modulo-1)) % modulo + 1; 
+        adjust_rtc(year, month, day, h, m, s);
+      } else if (btnState[2] == LOW) {
+        day = day % modulo + 1;
+        adjust_rtc(year, month, day, h, m, s);
+      }
+      break;
+  }
+}
+void readBtn(int btn) {
+  currentRead[btn] = digitalRead(btnPin[btn]);
+  if (currentRead[btn] == btnState[btn]) {
+    debounce[btn] = millis();
+  }
+  // if (btn==0){
+  //   Serial.print("btnState:");Serial.print(btnState[btn]);
+  //   Serial.print(" currentRead:");Serial.print(currentRead[btn]);
+  //   Serial.print(" mode:");Serial.print(mode[btn]);
+  //   Serial.println();
+  // } 
+
+  if (debug) {
+  Serial.print(" currentRead:"); Serial.print(currentRead[btn]);
+  Serial.print(" btn:"); Serial.print(btn);
+  Serial.print(" btnState:"); Serial.print(btnState[btn]);
+  Serial.print(" debounce:"); Serial.print(debounce[btn]);
+  Serial.print(" millis:");Serial.println(millis());
+
+  }
+
+  if ((millis()-debounce[btn]) > debounceDelay) {
+  // Serial.print(millis()-debounce[btn]);
+  // Serial.print(" "); Serial.println(debounceDelay);
+    if (currentRead[btn] == LOW && btnState[btn] == HIGH) {
+      btnState[btn] = LOW;
+      // Serial.print("[A] mode:");Serial.println(mode[btn]);
+        mode[btn] = (mode[btn] + 1) % btnModes[btn];
+        Serial.print("[B] mode:");Serial.println(mode[btn]);
+        stateHandler();
+    } else
+    if (currentRead[btn] == HIGH && btnState[btn] == LOW) {
+      btnState[btn] = HIGH;
     }
   }
 }
 
-void blink_LED() {
+void blink_LED(int onCycle) {
   static bool isON = false;
   static int count = 0;
-
+  int onCycleCount = onCycle >= 0 ? onCycle : 127;
+  int offCycleCount = 256 - onCycle;
   count++;
-  if (count == 10) {
+  if (isON && count == onCycle) {
     count = 0;
-    if (isON) {
-      isON = false;
-      digitalWrite(LED_BUILTIN, LOW);
-      sprintf(buf, "%02d:%02d:%02d\r", h, m, s);
-      sendSerial(buf);
-    } else {
-      isON = true;
-      digitalWrite(LED_BUILTIN, HIGH);
-    }
+    isON = false;
+    digitalWrite(LED_BUILTIN, LOW);
+    sprintf(buf, "%02d:%02d:%02d\r", h, m, s);
+    sendSerial(buf);
+  } else if (!isON && count == offCycleCount) {
+    count = 0;
+    isON = true;
+    digitalWrite(LED_BUILTIN, HIGH);
   }
 }
 void loop() {
-  delay(200);
+  for (int btn=0; btn<4; btn++) {
+    readBtn(btn);
+    // Serial.print("btnState[");Serial.print(btn);Serial.print("]:");Serial.println(btnState[btn]);
+  }
+
+  get_date_time_rtc(year, month, day, h, m, s);
   refreshDisplay();
-  blink_LED();
+  // delay(20);
+
+  // loop_rtc();
+  blink_LED(0);
 }
