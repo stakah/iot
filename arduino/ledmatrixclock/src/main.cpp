@@ -8,6 +8,9 @@
 
 #include <rtc_demo.h>
 
+// buzzer
+#define BUZZER 11
+
 // btn 0
 #define DISPLAY_TIME 0
 #define DISPLAY_YEAR 1
@@ -219,6 +222,8 @@ void tikClock();
 void blink_LED(int);
 
 void setup() {
+  pinMode(BUZZER, OUTPUT);
+
   pinMode(LED_BUILTIN, OUTPUT);
   while (!Serial); // for Leonardo/Micro/Zero
 
@@ -529,6 +534,8 @@ void tikClock() {
 }
 
 void stateHandler() {
+  tone(BUZZER, 880, 150);
+
   switch (mode[0]) {
     case SET_HOUR:
         s = 0;
