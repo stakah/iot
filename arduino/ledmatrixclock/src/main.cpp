@@ -8,6 +8,9 @@
 
 #include <rtc_demo.h>
 
+#include "melodies.h"
+int currentMelody = 0;
+
 // buzzer
 #define BUZZER 11
 
@@ -39,7 +42,7 @@ int btnPin[4] = {2, 3, 4, 5};
 int btnState[4] = {HIGH, HIGH, HIGH, HIGH};
 int currentRead[4] = {0, 0, 0, 0};
 int mode[4] = {DISPLAY_TIME, 0, 0, 0};
-int btnModes[4] = {8, 2, 2, 2};
+int btnModes[4] = {8, 3, 2, 2};
 
 
 unsigned long debounce[4] = {0, 0, 0, 0};
@@ -603,6 +606,11 @@ void stateHandler() {
       }
       break;
   }
+
+    Serial.print("mode[1]:");
+    Serial.println(mode[1]);
+    start_melody(mode[1] % btnModes[1]);
+  
 }
 void readBtn(int btn) {
   currentRead[btn] = digitalRead(btnPin[btn]);
@@ -644,7 +652,7 @@ void readBtn(int btn) {
 void blink_LED(int onCycle) {
   static bool isON = false;
   static int count = 0;
-  int onCycleCount = onCycle >= 0 ? onCycle : 127;
+  // int onCycleCount = onCycle >= 0 ? onCycle : 127;
   int offCycleCount = 256 - onCycle;
   count++;
   if (isON && count == onCycle) {
@@ -671,4 +679,7 @@ void loop() {
 
   // loop_rtc();
   blink_LED(0);
+
+  // Serial.println("play_note()");
+  play_note(BUZZER);
 }
