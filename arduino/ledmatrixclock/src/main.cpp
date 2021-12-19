@@ -57,7 +57,7 @@ byte digits[10][8]={
   {B00001110, //0
    B00010001,
    B00010001,
-   B00010101,
+   B00010001,
    B00010001,
    B00010001,
    B00001110,
@@ -248,6 +248,7 @@ void setup() {
   
   for (int i=0; i<4; i++) pinMode(btnPin[i], INPUT_PULLUP);
 
+  stop_melody();
   refreshDisplay();
 
 /*
@@ -607,9 +608,12 @@ void stateHandler() {
       break;
   }
 
+  if (btnState[1] == LOW) {
     Serial.print("mode[1]:");
     Serial.println(mode[1]);
+    begin_player();
     start_melody(mode[1] % btnModes[1]);
+  }
   
 }
 void readBtn(int btn) {

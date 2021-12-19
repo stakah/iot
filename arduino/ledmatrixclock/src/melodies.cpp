@@ -24,7 +24,7 @@ note auld[] =     // Ald Lang
         {4/3,NF4}, {4,  NR}
     };
 
-note sun[] =     // Ald Lang
+note sun[] =     // Sun
     {
         {4,  ND5}, {16  ,NG4}, {16,  NA4}, {16,  NB4}, {16,  NC5}, {4  ,ND5}, {4,  NG4},
         {4  ,NE5}, {16,  NC5}, {16,  ND5}, {16,  NE5}, {16  ,NF5}, {4,  NG5}, {4,  NG4},
@@ -39,7 +39,13 @@ note sun[] =     // Ald Lang
 note* melodies[TOTAL_MELODIES] = { happy, auld, sun };
 int sizes[TOTAL_MELODIES] = {26, 45, 31};
 
-int isPlayingMelody = 0;
+#define PLAYER_IDLE 0
+#define PLAYER_BEGIN_MUSIC 1
+#define PLAYER_STOP_MUSIC 2
+#define PLAYER_PLAYING 3
+
+int playerState = PLAYER_IDLE;
+
 int melodyNumber = 0;
 
 int noteIx = 0;
@@ -47,17 +53,41 @@ int size = 0;
 note* melody;
 
 void start_melody(int m){
-  if (isPlayingMelody == 0) {
-      melodyNumber = m % TOTAL_MELODIES;
-      melody = melodies[melodyNumber];
-      size = sizes[melodyNumber];
-      isPlayingMelody = 1;
-      noteIx = 0;
+  switch (playerState) {
+      case PLAYER_IDLE:
+        return;
+        break;
+      case PLAYER_BEGIN_MUSIC:
+        melodyNumber = m % TOTAL_MELODIES;
+        melody = melodies[melodyNumber];
+        size = sizes[melodyNumber];
+        playerState = PLAYER_PLAYING;
+        noteIx = 0;
+        break;
+      case PLAYER_STOP_MUSIC:
+        playerState = PLAYER_IDLE;
+        break;
+      case PLAYER_PLAYING:
+        break;
   }
 }
 
+void toggle_player(){
+    switch(playerState) {
+        case PLAYER_PLAYING:
+          stop_melody();
+          break;
+        case PLAYER_IDLE:
+          start_melody(melodyNumber);
+          break;
+    }
+}
+void begin_player(){
+    playerState = PLAYER_BEGIN_MUSIC;
+}
+
 void stop_melody(){
-    isPlayingMelody = 0;
+    playerState = PLAYER_STOP_MUSIC;
 }
 
 note currentNote;
@@ -65,10 +95,14 @@ long duration = 0;
 
 void play_note(int pin){
     static long wait_time = 0;
-    if (isPlayingMelody == 0) return;
 
+    if (playerState != PLAYER_PLAYING) {
+        // noTone(pin);
+        return;
+    }
 
-    if ((millis() - wait_time) >= duration) {
+    long mill = millis();
+    if ((mill - wait_time) >= duration) {
         wait_time = millis();
         currentNote = melody[noteIx];
 
