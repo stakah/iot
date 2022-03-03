@@ -47,8 +47,8 @@ int btnModes[4] = {8, 3, 2, 2};
 
 unsigned long debounce[4] = {0, 0, 0, 0};
 unsigned long debounceDelay = 50;
-unsigned long refreshInterval = 200L;
-int blinkDotsN = 1000L / refreshInterval / 2;
+unsigned long refreshInterval = 125L; //ms
+int blinkDotsN = (1000L / refreshInterval) / 2; // 4 tiks per cycle (8 tiks total)
 int blinkDotsC = 0;
 
 int reset_time = 0; // 0 = NO, 1 = YES
