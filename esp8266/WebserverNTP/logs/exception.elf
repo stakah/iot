@@ -1,0 +1,27 @@
+--------------- CUT HERE FOR EXCEPTION DECODER ---------------
+
+Exception (0):
+epc1=0x4025a9c0 epc2=0x00000000 epc3=0x00000000 excvaddr=0x00000000 depc=0x00000000
+
+>>>stack>>>
+
+ctx: cont
+sp: 3ffffd40 end: 3fffffc0 offset: 0190
+3ffffed0:  40215e31 feefeffe 3fff1c34 4025a9b9
+3ffffee0:  ffffff01 55aa55aa 0000001a 00000020
+3ffffef0:  00000020 000000fb 000000fb aa55aa55
+3fffff00:  000000fd 4025a4b7 00000000 3fff1c34  
+3fffff10:  3ffe8534 00000001 3ffefd7c 4025a48f
+3fffff20:  4025a502 00000001 00000001 00000001  
+3fffff30:  40206062 3ffefd7c feefeffe feefeffe
+3fffff40:  3fffdad0 3ffefc9c 3ffefd7c 40206570
+3fffff50:  3fffdad0 00000000 3ffefd7c 40205d2e  
+3fffff60:  feefeffe feefeffe feefeffe feefeffe
+3fffff70:  feefeffe feefeffe feefeffe feefeffe
+3fffff80:  feefeffe feefeffe feefeffe feefeffe  
+3fffff90:  feefeffe feefeffe feefeffe 3ffefe14
+3fffffa0:  3fffdad0 00000000 3ffefdd4 40214d44  
+3fffffb0:  feefeffe feefeffe 3ffe85c8 40100349
+<<<stack<<<
+
+--------------- CUT HERE FOR EXCEPTION DECODER ---------------

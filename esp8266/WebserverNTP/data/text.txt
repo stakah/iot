@@ -1,0 +1,8 @@
+Text.txt
+========
+
+Platformio. LittleFS
+
+Hello, world!
+Olá, mundo!
+Holla, mundo!

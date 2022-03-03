@@ -22,6 +22,10 @@
 		{
 			"name": "es32simplewifi",
 			"path": "esp32/es32simplewifi"
+		},
+		{
+			"name": "WebserverNTP",
+			"path": "C:/Users/staka/Documents/PlatformIO/Projects/WebserverNTP"
 		}
 	]
 }

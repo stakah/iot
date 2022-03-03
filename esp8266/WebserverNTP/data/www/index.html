@@ -1,0 +1,78 @@
+<html>
+<head>
+    <title>ESP8266 Demo</title>
+    <style>
+      body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }
+    </style>
+</head>
+<body>
+    <h1>Hello from ESP8266!!!!p</h1>
+    <p>Uptime: <span id="uptime">00:00:00</span></p>
+    <div id="graph"><img id="graph-img" src="/test.svg" /></div>
+    <table>
+        <thead>
+            <tr>
+                <th>Epoch Time</th>
+                <th>Formatted Time</th>
+                <th>HH:mm:ss</th>
+                <th>Week day</th>
+                <th>Month day</th>
+                <th>Month / name</th>
+                <th>Year</th>
+                <th>Current date</th>
+                <th>cTime</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span id="epochTime">-</span></td>
+                <td><span id="formattedTime">-</span></td>
+                <td><span id="currentHour">-</span>:
+                    <span id="currentMinute">-</span>:
+                    <span id="currentSecond">-</span></td>
+                
+                <td><span id="weekDay">-</span></td>
+                <td><span id="monthDay">-</span></td>
+                <td><span id="currentMonth">-</span>/
+                    <span id="currentMonthName">-</span></td>
+                <td><span id="currentYear">-</span></td>
+                <td>[<span id="currentDate">-</span>]</td>
+                <td><span id="cTime"></span></td>
+                            </tr>
+        </tbody>
+    </table>
+    <script>
+        const img = document.getElementById('graph-img')
+        const fields = ['uptime','epochTime', 'formattedTime', 'currentHour', 'currentMinute', 'currentSecond',
+                'weekDay', 'monthDay', 'currentMonth', 'currentMonthName', 'currentYear', 'currentDate', 'cTime',
+                ]
+        async function updateTime() {
+            try {
+                const res = await fetch("/data");
+                //console.log("res:", res)
+                const body = await res.clone().json();
+                const data = body['data']
+
+                for (var i=0; i<fields.length; i++) {
+                    const key = fields[i]
+                    const el = document.getElementById(key)
+                    el.innerHTML = data[key]
+                }
+
+                const nonce = Math.random(Number.MAX_SAFE_INTEGER)
+                img.setAttribute('src', '/test.svg?p=' + nonce)
+
+                setTimeout(() => {updateTime()}, 1000)
+            } catch (err) {
+                console.log('err:', err)
+                setTimeout(() => {updateTime()}, 5000)
+            }
+        }
+
+        document.addEventListener('readystatechange', (event) => {
+            console.log('readystatechange')
+            updateTime()
+        })
+</script>
+</body>
+</html>
