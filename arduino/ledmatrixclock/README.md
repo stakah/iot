@@ -32,6 +32,27 @@
   Second iteration. Instead of using delay in loop function, use Hardware timer interrupt to count time
   and increase conters. Espected to be more precise than v0.1.
   
+####  Buttons & Buzzer
+
+  Buttons connections.
+
+  |Arduino Pin|Button    |
+  |-----------|----------|
+  | Pin 2     | 1 (mode) |
+  | Pin 3     | 2 (play) |
+  | Pin 4     | 3 (+)    |
+  | Pin 3     | 4 (-)    |
+
+  Buzzer connections.
+
+  |Arduino Pin| Buzzer   | 4k7 Resistor |
+  |-----------|----------|--------------|
+  | Pin 11    |          |     X        |
+  | GND       |   (-)    |              |
+  |           |   (+)    |     X        |
+  
+  ![Buttons diagram][buttons]
+
 ### v0.7
 
   Connecting RTC DS1307 module to arduino.
@@ -56,5 +77,6 @@
 [capture-img-v07]: images/capture.jpg "Capture"
 [amz-led]: https://www.amazon.com/MAX7219-Control-Display-Max7219-Controller/dp/B07GWV2GD7
 [MAX7219]: images/max7219_led_matrix_32x8.png "LED_MATRIX_32x8"
+[buttons]: images/Arduino_buttons.png "Buttons"
 [DS1307]: images/arduino_rtc_ds1307.jpg "Realtime Clock"
 [DS1307_charger]: images/DS1307_Disable_charger.png "Disable DS1307 charger"
