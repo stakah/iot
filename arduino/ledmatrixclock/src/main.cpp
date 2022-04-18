@@ -682,7 +682,7 @@ void loop() {
   // delay(20);
 
   // loop_rtc();
-  blink_LED(0);
+  blink_LED(LED_BUILTIN);
 
   // Serial.println("play_note()");
   play_note(BUZZER);

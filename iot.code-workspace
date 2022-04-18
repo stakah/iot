@@ -26,6 +26,10 @@
 		{
 			"name": "WebserverNTP",
 			"path": "C:/Users/staka/Documents/PlatformIO/Projects/WebserverNTP"
+		},
+		{
+			"name": "WebserverNTP",
+			"path": "esp8266/WebserverNTP"
 		}
 	]
 }
